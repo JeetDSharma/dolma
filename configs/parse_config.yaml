@@ -1,0 +1,11 @@
+# dolma/configs/parse_config.yaml
+
+# Either a single file or a directory containing multiple JSONL files
+input_jsonl: "dolma/jobs/{unzip_timestamp}/output"
+
+# Output CSV and logs will be placed in a timestamped parse job folder
+output_csv:  "dolma/jobs/{timestamp}_parse/output/blogs_{timestamp}.csv"
+logs_dir:    "dolma/jobs/{timestamp}_parse/logs"
+
+min_text_length: 1000     # optional, skip very short entries
+encoding: "utf-8"
