@@ -4,3 +4,5 @@ venv/
 jobs/
 .DS_Store
 logs/
+scripts/__pycache__/
+scripts/utils/__pycache__/

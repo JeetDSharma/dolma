@@ -11,11 +11,12 @@ def decompress_file(src: Path, out_dir: Path, logger, delete_src: bool):
     if src.suffix not in {".zst", ".gz"}:
         logger.info(f"skip (unknown ext): {src.name}")
         return
-    # build output name
+
     base = src.name
-    if base.endswith(".json.jsonl"):      # 
+    if base.endswith(".json.jsonl"):
         logger.info(f"skip (looks decompressed): {src.name}")
         return
+
     if base.endswith(".jsonl.zst"):
         dst = out_dir / base.replace(".jsonl.zst", ".json.jsonl")
     elif base.endswith(".jsonl.gz"):
@@ -25,7 +26,6 @@ def decompress_file(src: Path, out_dir: Path, logger, delete_src: bool):
     elif base.endswith(".json.gz"):
         dst = out_dir / base.replace(".json.gz", ".json.jsonl")
     else:
-        # fallback
         dst = out_dir / (src.stem + ".jsonl")
 
     if dst.exists():
@@ -47,6 +47,7 @@ def decompress_file(src: Path, out_dir: Path, logger, delete_src: bool):
     except Exception as e:
         logger.error(f"failed {src.name}: {e}")
 
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", required=True, help="path to unzip_config.yaml")
@@ -54,17 +55,24 @@ def main():
     ap.add_argument("--vars", nargs="*", default=[], help="override vars like download_timestamp=20251007_120654_download")
     args = ap.parse_args()
 
-    setup_logging(args.logging)
-    logger = get_logger("DolmaExtractor")
+    # 1️⃣ load config first
     cfg = load_yaml(args.config)
-
-    kv = dict(v.split("=",1) for v in args.vars) if args.vars else {}
+    kv = dict(v.split("=", 1) for v in args.vars) if args.vars else {}
     ts = stamp()
+
+    # 2️⃣ resolve directories with timestamp / vars
     input_dir = Path(fill_vars(cfg["input_dir"], timestamp=ts, **kv))
     output_dir = Path(fill_vars(cfg["output_dir"], timestamp=ts, **kv))
     logs_dir = Path(fill_vars(cfg["logs_dir"], timestamp=ts, **kv))
-    ensure_dir(output_dir); ensure_dir(logs_dir)
+    ensure_dir(output_dir)
+    ensure_dir(logs_dir)
 
+    # 3️⃣ setup job-specific logging after directories exist
+    job_log = logs_dir / "dolma_unzip.log"
+    setup_logging(args.logging, job_log_file=job_log)
+    logger = get_logger("DolmaExtractor")
+
+    # 4️⃣ begin processing
     files = [p for p in input_dir.iterdir() if p.is_file() and p.suffix in {".zst", ".gz"}]
     if not files:
         logger.error(f"no compressed files in {input_dir}")
@@ -77,7 +85,9 @@ def main():
     with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as ex:
         list(ex.map(lambda p: decompress_file(p, output_dir, logger, delete_src), files))
 
-    logger.info("extract complete.")
+    logger.info("✅ extract complete.")
+    logger.info(f"output: {output_dir}")
+
 
 if __name__ == "__main__":
     main()
