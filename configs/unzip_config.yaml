@@ -1,0 +1,5 @@
+input_dir:  "dolma/jobs/{download_timestamp}/output"  # filled by runner or pass --vars
+output_dir: "dolma/jobs/{timestamp}_unzip/output"
+logs_dir:   "dolma/jobs/{timestamp}_unzip/logs"
+workers:    6
+delete_compressed: false

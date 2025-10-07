@@ -1,0 +1,6 @@
+output_dir: "dolma/jobs/{timestamp}_download/output"  # {timestamp} is auto-filled by runner
+logs_dir:   "dolma/jobs/{timestamp}_download/logs"
+urls_file:  "dolma/data/raw/urls.txt"
+workers:    6
+retry_limit: 5
+chunk_mb:    1

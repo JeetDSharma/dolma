@@ -1,3 +1,6 @@
 download/logs/
 download/output/
 venv/
+jobs/
+.DS_Store
+logs/
