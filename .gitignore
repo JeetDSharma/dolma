@@ -6,3 +6,5 @@ jobs/
 logs/
 scripts/__pycache__/
 scripts/utils/__pycache__/
+.ipynb_checkpoints/
+.env

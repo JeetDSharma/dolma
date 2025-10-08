@@ -8,4 +8,5 @@ output_csv:  "dolma/jobs/{timestamp}_parse/output/blogs_{timestamp}.csv"
 logs_dir:    "dolma/jobs/{timestamp}_parse/logs"
 
 min_text_length: 1000     # optional, skip very short entries
+max_text_length: 2000     # optional, skip very long entries
 encoding: "utf-8"

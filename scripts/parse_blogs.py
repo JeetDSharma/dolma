@@ -57,7 +57,7 @@ def is_blog_url(url: str) -> bool:
 
 
 # ---------- Core Parsing ----------
-def parse_jsonl_to_csv(input_path: Path, writer: csv.DictWriter, logger, min_len: int):
+def parse_jsonl_to_csv(input_path: Path, writer: csv.DictWriter, logger, min_len: int, max_len: int):
     total, kept = 0, 0
     with open(input_path, "r", encoding="utf-8") as fin:
         for line in fin:
@@ -66,9 +66,10 @@ def parse_jsonl_to_csv(input_path: Path, writer: csv.DictWriter, logger, min_len
                 obj = json.loads(line)
                 url = obj.get("metadata", {}).get("url", "")
                 text = obj.get("text", "")
+                text_length = len(text.strip().replace("\n", " "))
                 if not url or not text:
                     continue
-                if len(text) < min_len:
+                if text_length < min_len or text_length > max_len:
                     continue
                 if not is_blog_url(url):
                     continue
@@ -80,6 +81,7 @@ def parse_jsonl_to_csv(input_path: Path, writer: csv.DictWriter, logger, min_len
                     "added": obj.get("added", ""),
                     "source": obj.get("source", ""),
                     "text": text.strip().replace("\n", " "),
+                    "text_length": text_length,
                 })
                 kept += 1
             except Exception as e:
@@ -128,19 +130,19 @@ def main():
 
     logger.info(f"Found {len(jsonl_files)} JSONL files to parse.")
     min_len = int(cfg.get("min_text_length", 0))
-
+    max_len = int(cfg.get("max_text_length", 1000000))
     # ---- Write merged CSV ----
     total_lines = total_kept = 0
     with open(output_csv, "w", newline="", encoding=cfg.get("encoding", "utf-8")) as fout:
         writer = csv.DictWriter(
             fout,
-            fieldnames=["id", "url", "created", "added", "source", "text"],
+            fieldnames=["id", "url", "created", "added", "source", "text", "text_length"],
             quoting=csv.QUOTE_MINIMAL,
         )
         writer.writeheader()
 
         for jf in tqdm(jsonl_files, desc="Parsing JSONL files"):
-            t, k = parse_jsonl_to_csv(jf, writer, logger, min_len)
+            t, k = parse_jsonl_to_csv(jf, writer, logger, min_len, max_len)
             total_lines += t
             total_kept += k
 
